@@ -1,14 +1,14 @@
 import cv2
 import torch
 from tools.nms import *
-from model.retinaface import *
+from model.mobile_face import *
 from tools.anchor import *
 
 
 class Detector:
     def __init__(self, weight_path):
         self.device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-        self.net = RetinaFace(cfg_mobilenet)
+        self.net = MobileFace(cfg_mobilenet)
         self.net.load_state_dict(torch.load(weight_path))
         self.net.eval()
 
@@ -69,5 +69,5 @@ class Detector:
 
 
 if __name__ == '__main__':
-    weight_path = 'checkpoints/retinaface.pth'
-    Detector(weight_path).detect("/data/face_det/data/widerface/val/images/12--Group/12_Group_Group_12_Group_Group_12_935.jpg", 0.1)
+    weight_path = 'checkpoints/mobile_face_det.pth'
+    Detector(weight_path).detect("/data/face_det/data/widerface/val/images/12--Group/12_Group_Group_12_Group_Group_12_935.jpg", 0.3)

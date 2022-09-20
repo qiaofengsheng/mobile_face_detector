@@ -4,9 +4,9 @@ import torchvision.models._utils as _utils
 from data.config import *
 
 
-class RetinaFace(nn.Module):
+class MobileFace(nn.Module):
     def __init__(self, config, is_train=True):
-        super(RetinaFace, self).__init__()
+        super(MobileFace, self).__init__()
         self.config = config
         self.is_train = is_train
         backbone = MobileNetV1(config['model_size'])
@@ -50,7 +50,7 @@ class RetinaFace(nn.Module):
 
 if __name__ == '__main__':
     x = torch.randn(1, 3, 640, 640)
-    net = RetinaFace(cfg_mobilenet)
+    net = MobileFace(cfg_mobilenet)
     for i in net(x):
         c=torch.argmax(i[...,-2:],dim=3)
         print(c)

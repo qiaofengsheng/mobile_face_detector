@@ -2,7 +2,7 @@ import torch
 import tqdm
 from torch import optim
 from data.dataset import *
-from model.retinaface import RetinaFace
+from model.mobile_face import MobileFace
 from tools.loss import *
 from tools.anchor import *
 
@@ -10,7 +10,7 @@ from tools.anchor import *
 class Train:
     def __init__(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-        self.net = RetinaFace(cfg_mobilenet)
+        self.net = MobileFace(cfg_mobilenet)
         self.optimizer = optim.Adam(self.net.parameters(), weight_decay=0.00005)
         self.train_dataset = RetinaFaceDataset(r"/data/face_det/data/widerface/train/label.txt", (640, 640))
         self.train_loader = DataLoader(self.train_dataset, batch_size=cfg_mobilenet['batch_size'], shuffle=True,
