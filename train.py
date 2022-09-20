@@ -34,7 +34,7 @@ class Train:
                     t1.update(1)
                     loss.backward()
                     self.optimizer.step()
-            torch.save(self.net.state_dict(), '/home/situ/qfs/temp/face_det/checkpoints/retinaface.pth')
+            torch.save(self.net.state_dict(), '/home/situ/qfs/temp/face_det/checkpoints/mobile_face_det.pth')
             print('save model successfully!')
 
 
