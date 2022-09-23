@@ -4,13 +4,14 @@ import torch
 from torch import nn
 from tools.anchor import *
 
-def balance_ps_ng(targets,pos_ng_scale=50):
+def balance_ps_ng(targets,pos_ng_scale=200):
     object_mask = targets[..., 0] > 0
     no_object_mask = targets[...,0]==0
+    ng_sum_nums = no_object_mask.sum()
     pos_nums = object_mask.sum()
-    ng_nums = pos_nums * pos_ng_scale
+    ng_nums = min(pos_nums * pos_ng_scale,ng_sum_nums)
     select_ng=random.sample(torch.nonzero(no_object_mask).tolist(),ng_nums)
-    new_no_object_mask = torch.zeros(no_object_mask.shape, dtype=torch.bool)
+    new_no_object_mask = torch.zeros(no_object_mask.shape, dtype=torch.bool).cuda()
     for i in select_ng:
         new_no_object_mask[i[0],i[1],i[2],i[3]]=True
     conf_mask = object_mask + new_no_object_mask
@@ -25,12 +26,14 @@ def loss_function(predicts, targets, alpha):
     '''
     predicts = predicts.reshape(targets.shape[0], targets.shape[1], targets.shape[2], targets.shape[3], -1)
     object_mask = targets[..., 0] > 0
-    loss_conf = nn.BCELoss().forward(torch.sigmoid(predicts[..., 0]), targets[..., 0].float())
+    # loss_conf = nn.BCELoss().forward(torch.sigmoid(predicts[..., 0]), targets[..., 0].float())
+    conf_mask=balance_ps_ng(targets)
+    loss_conf = nn.BCELoss().forward(torch.sigmoid(predicts[conf_mask][..., 0]), targets[conf_mask][..., 0].float())
     loss_bbox = nn.SmoothL1Loss().forward(predicts[object_mask][..., 1:5], targets[object_mask][..., 1:5])
     # loss_cls = nn.CrossEntropyLoss().forward(predicts[object_mask][..., 5:],
     #                                          targets[object_mask][..., 5:].squeeze().long())
 
-    return loss_conf + loss_bbox
+    return 2*loss_conf + loss_bbox
 
 
 if __name__ == '__main__':

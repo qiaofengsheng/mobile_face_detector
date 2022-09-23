@@ -8,9 +8,14 @@ from tools.anchor import *
 
 
 class Train:
-    def __init__(self):
+    def __init__(self,weight_path=None):
+
         self.device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
         self.net = MobileFace(cfg_mobilenet)
+        if weight_path is not None:
+            self.net.load_state_dict(torch.load(weight_path))
+            print('successfully load weight!')
+
         self.optimizer = optim.Adam(self.net.parameters(), weight_decay=0.00005)
         self.train_dataset = RetinaFaceDataset(r"/data/face_det/data/widerface/train/label.txt", (640, 640))
         self.train_loader = DataLoader(self.train_dataset, batch_size=cfg_mobilenet['batch_size'], shuffle=True,
@@ -34,9 +39,9 @@ class Train:
                     t1.update(1)
                     loss.backward()
                     self.optimizer.step()
-            torch.save(self.net.state_dict(), '/home/situ/qfs/temp/face_det/checkpoints/mobile_face_det.pth')
+            torch.save(self.net.state_dict(), '/home/situ/qfs/temp/c/mobile_face_detector/checkpoints/mobile_face_det_balance.pth')
             print('save model successfully!')
 
 
 if __name__ == '__main__':
-    Train().train()
+    Train("/home/situ/qfs/temp/c/mobile_face_detector/checkpoints/mobile_face_det.pth").train()

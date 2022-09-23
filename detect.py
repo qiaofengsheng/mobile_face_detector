@@ -6,10 +6,11 @@ from tools.anchor import *
 
 
 class Detector:
-    def __init__(self, weight_path):
+    def __init__(self, weights_path, threshold=0.5):
+        self.threshold = threshold
         self.device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
         self.net = MobileFace(cfg_mobilenet)
-        self.net.load_state_dict(torch.load(weight_path))
+        self.net.load_state_dict(torch.load(weights_path))
         self.net.eval()
 
     def _filter(self, output, threshold):
@@ -30,7 +31,7 @@ class Detector:
         score = torch.sigmoid(vec[:, 0])
         return torch.stack([center_x, center_y, w, h, score], dim=1)
 
-    def detect(self, image_path, threshold):
+    def detect(self, image_path):
         image = cv2.imread(image_path)
         image_ = image.copy()
         h, w, c = image.shape
@@ -40,9 +41,9 @@ class Detector:
         scale_w = 640 / w
         image = torch.Tensor(image).permute(2, 0, 1).unsqueeze(0)
         output0, output1, output2 = self.net(image)
-        idx80, vec80 = self._filter(output0, threshold)
-        idx40, vec40 = self._filter(output1, threshold)
-        idx20, vec20 = self._filter(output2, threshold)
+        idx80, vec80 = self._filter(output0, self.threshold)
+        idx40, vec40 = self._filter(output1, self.threshold)
+        idx20, vec20 = self._filter(output2, self.threshold)
         result80 = self._parse(idx80, vec80, 8, anchors[80], scale_h, scale_w)
         result40 = self._parse(idx40, vec40, 16, anchors[40], scale_h, scale_w)
         result20 = self._parse(idx20, vec20, 32, anchors[20], scale_h, scale_w)
@@ -54,7 +55,7 @@ class Detector:
         if result80.shape[0] != 0:
             result.append(result80)
         bboxes = torch.cat(result, dim=0).detach().numpy()
-        idx = py_cpu_nms(bboxes, 0.2)
+        idx = py_cpu_nms(bboxes, 0.1)
         bboxes = bboxes[idx]
 
         for box in bboxes:
@@ -69,5 +70,5 @@ class Detector:
 
 
 if __name__ == '__main__':
-    weight_path = 'checkpoints/mobile_face_det.pth'
-    Detector(weight_path).detect("/data/face_det/data/widerface/val/images/12--Group/12_Group_Group_12_Group_Group_12_935.jpg", 0.3)
+    weight_path = 'checkpoints/mobile_face_det_balance.pth'
+    Detector(weight_path, 0.5).detect("/home/situ/图片/R1.jpeg")
