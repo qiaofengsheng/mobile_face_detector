@@ -1,4 +1,6 @@
 # mobile_face_detector
 
-![result](https://user-images.githubusercontent.com/77648679/190987583-c299d278-b2c9-41c1-ab7f-451de7428229.jpg)
+threshold = 0.5
+![图片](https://user-images.githubusercontent.com/77648679/191905679-3afd41cc-a2d9-4111-95ce-28f9a35cd428.png)
+
 
