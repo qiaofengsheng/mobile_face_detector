@@ -71,4 +71,4 @@ class Detector:
 
 if __name__ == '__main__':
     weight_path = 'checkpoints/mobile_face_det_balance.pth'
-    Detector(weight_path, 0.5).detect("/home/situ/图片/R1.jpeg")
+    Detector(weight_path, 0.5).detect("/data/face_det/data/widerface/val/images/12--Group/12_Group_Group_12_Group_Group_12_935.jpg")
