@@ -1,9 +1,15 @@
+import os
+import time
+
 import cv2
+import numpy as np
 import torch
+import tqdm
+
 from tools.nms import *
 from model.mobile_face import *
 from tools.anchor import *
-
+from cv2 import getTickCount, getTickFrequency
 
 class Detector:
     def __init__(self, weights_path, threshold=0.5):
@@ -47,28 +53,42 @@ class Detector:
         result80 = self._parse(idx80, vec80, 8, anchors[80], scale_h, scale_w)
         result40 = self._parse(idx40, vec40, 16, anchors[40], scale_h, scale_w)
         result20 = self._parse(idx20, vec20, 32, anchors[20], scale_h, scale_w)
-        result = []
-        if result20.shape[0] != 0:
-            result.append(result20)
-        if result40.shape[0] != 0:
-            result.append(result40)
-        if result80.shape[0] != 0:
-            result.append(result80)
-        bboxes = torch.cat(result, dim=0).detach().numpy()
-        idx = py_cpu_nms(bboxes, 0.1)
-        bboxes = bboxes[idx]
+        result = result80.tolist()+result40.tolist()+result20.tolist()
+        if len(result)==0:
+            return result
+        else:
+            bboxes = np.array(result)
+            idx = py_cpu_nms(bboxes, 0.1)
+            bboxes = bboxes[idx]
 
-        for box in bboxes:
-            print(box)
-            x1 = int(box[0] - box[2] / 2)
-            y1 = int(box[1] - box[3] / 2)
-            x2 = int(box[0] + box[2] / 2)
-            y2 = int(box[1] + box[3] / 2)
-            cv2.rectangle(image_, (x1, y1), (x2, y2), (0, 0, 255))
-        cv2.imshow('w', image_)
-        cv2.waitKey(0)
+            for box in bboxes:
+                print(box)
+                x1 = int(box[0] - box[2] / 2)
+                y1 = int(box[1] - box[3] / 2)
+                x2 = int(box[0] + box[2] / 2)
+                y2 = int(box[1] + box[3] / 2)
+                score = box[4]
+                cv2.rectangle(image_, (x1, y1), (x2, y2), (0, 0, 255),2)
+                cv2.putText(image_,'face:'+str(round(score,3)), (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX,0.5,(0, 0, 255),2)
+            cv2.imshow('w', image_)
+            cv2.waitKey(0)
+            return bboxes
+
 
 
 if __name__ == '__main__':
     weight_path = 'checkpoints/mobile_face_det_balance.pth'
-    Detector(weight_path, 0.5).detect("/data/face_det/data/widerface/val/images/12--Group/12_Group_Group_12_Group_Group_12_935.jpg")
+    image_path = '/data/face_det/data/widerface/val/images/41--Swimming'
+    detector = Detector(weight_path, 0.5)
+    time_list=[]
+    for i in tqdm.tqdm(os.listdir(image_path)):
+        path = os.path.join(image_path,i)
+        st = time.time()
+        detector.detect(path)
+        spend_time = time.time()-st
+        time_list.append(spend_time)
+
+    print('avg time:',np.mean(time_list))
+    print('min time:',np.min(time_list))
+    print('max time:',np.max(time_list))
+    print('avg fps:',1/np.mean(time_list))
